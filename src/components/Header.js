@@ -13,21 +13,23 @@ const Header = () => {
   } = useStaticQuery(query)
 
   return (
-    <header>
-      <nav>
-        <ul>
-          <li>Stack</li>
-          <li>Projects</li>
-          <li>Blog</li>
-        </ul>
-      </nav>
-      <div className={styles.logo}>
-        <img src={logo} alt="logo" />
-      </div>
-      <div className={styles.thumbnail}>
-        <Img fluid={fluid} alt="Shiyun's thumbnail" />
-      </div>
-    </header>
+    <div className={styles.wrapper}>
+      <header>
+        <nav>
+          <ul className={styles.navLinks}>
+            <li>Stack</li>
+            <li>Projects</li>
+            <li>Blog</li>
+          </ul>
+        </nav>
+        <div className={styles.logo}>
+          <img src={logo} alt="logo" />
+        </div>
+        <div className={styles.thumbnail}>
+          <Img fluid={fluid} alt="Shiyun's thumbnail" />
+        </div>
+      </header>
+    </div>
   )
 }
 

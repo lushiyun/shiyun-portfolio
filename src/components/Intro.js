@@ -14,8 +14,8 @@ const Intro = () => (
         Africa. Now I create things on the web to make the world a smaller
         place! I love street food and I waste time on K-pop.
       </h3>
-      <button className={styles.btnGhost}>My Resume</button>
-      <button className={styles.btnFull}>Get in Touch</button>
+      <button className="btnGhost">My Resume</button>
+      <button className="btnFull">Get in Touch</button>
     </section>
   </div>
 )

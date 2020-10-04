@@ -1,3 +1,11 @@
+@media (min-width: 768px) {
+  .wrapper {
+    background: linear-gradient(90deg, transparent 65%, rgba(249, 220, 36, 0.4) 35%);
+    width: 100%;
+    z-index: -1;
+  }
+}
+
 header {
   display: flex;
   justify-content: space-between;
@@ -7,8 +15,7 @@ header {
   max-width: 1200px;
 }
 
-ul {
-  list-style-type: none;
+.navLinks {
   display: flex;
 }
 
@@ -35,5 +42,20 @@ li {
     display: block;
     width: 135px;
     padding: 0 1em;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .thumbnail {
+    animation: thumbnail-spin infinite 2s alternate linear;
+  }
+}
+
+@keyframes thumbnail-spin {
+  from {
+    transform: rotate(-30deg);
+  }
+  to {
+    transform: rotate(30deg);
   }
 }

@@ -1,0 +1,40 @@
+.grid {
+  margin-top: 5em;
+  display: grid;
+  grid-template-columns: repeat( auto-fit, minmax(250px, 1fr) );
+  grid-gap: 1em;
+}
+
+.tech,
+.lib,
+.tool,
+.database {
+  border: 1px solid ;
+  border-radius: 10px;
+  background: transparent;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2em 0;
+}
+
+.tech {
+  border: 1.8px solid #EB8A44;
+}
+
+.lib {
+  border: 1.8px solid #8EBA43;
+}
+
+.tool {
+  border: 1.8px solid #F9DC24;
+}
+
+.database {
+  border: 1.8px solid #4B7447;
+}
+
+.grid li {
+  padding-top: .75em;
+}
