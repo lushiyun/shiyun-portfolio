@@ -12,5 +12,27 @@
 }
 
 .hero {
-  margin-bottom: 2em;
+  margin-bottom: 1em;
+}
+
+.social {
+  display: flex;
+  flex-direction: row;
+  margin: 3em 0 .75em;
+  padding-left: 0;
+}
+
+.social li {
+  margin-right: 1em;
+  font-size: 2.5rem;
+}
+
+.social a {
+  color: #656565;
+  transition: 250ms ease-in-out;
+}
+
+.social a:hover,
+.social a:active {
+  color: #EB8A44;
 }

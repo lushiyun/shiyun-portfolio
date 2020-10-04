@@ -22,11 +22,12 @@ import { SiPostgresql } from "react-icons/si"
 import { FaSass } from "react-icons/fa"
 
 import styles from "./stack.module.css"
+import TitleLeft from "./TitleLeft"
 
 const Stack = () => {
   return (
     <section>
-      <h1 className={styles.title}>My Stack</h1>
+      <TitleLeft title={'My Stack'} />
       <div className={styles.grid}>
         <article className={styles.tech}>
           <strong>Technologies</strong>

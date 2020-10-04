@@ -19,7 +19,7 @@ header {
   display: flex;
 }
 
-li {
+.navLinks li {
   margin-right: 1.5em;
 }
 

@@ -1,0 +1,20 @@
+.content {
+  padding: 3em 0 0;
+}
+
+.description {
+  margin-top: 1em;
+  max-width: 65ch;
+}
+
+.photo {
+  max-width: 500px;
+}
+
+@media (min-width: 768px) {
+  .content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 1em;
+  }
+}

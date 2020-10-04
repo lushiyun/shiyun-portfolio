@@ -50,8 +50,12 @@ strong {
   font-weight: var(--fw-bold);
 }
 
-ul {
-  list-style-type: none;
+li {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
 }
 
 h1,
@@ -120,4 +124,34 @@ p {
 
 .btnFull {
   background: rgba(142, 186, 67, 0.4);
+}
+
+.border {
+  width: 100px;
+}
+
+.title-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+footer {
+  background-color: rgba(249, 220, 36, 0.4);
+}
+
+.footer-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--clr-txt);
+  text-transform: uppercase;
+  padding: 1em 2em;
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.gatsby-logo {
+  display: inline-block;
+  width: 80px;
 }
