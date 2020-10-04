@@ -1,4 +1,74 @@
-div {
-  background-color: red;
-  color: white;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --ff-primary: "Roboto Mono", monospace;
+  --ff-secondary: "Lora", serif;
+
+  --fw-reg: 400;
+  --fw-bold: 700;
+
+  --clr-txt: #111d33;
+  --clr-ylw: #f9dc24;
+  --clr-org: #eb8a44;
+  --clr-lm: #8eba43;
+  --clr-olv: #4b7447;
+
+  --fs-h1: 3.75rem;
+  --fs-h2: 2.25rem;
+  --fs-h3: 1.25rem;
+  --fs-body: 1rem;
+}
+
+@media (min-width: 992px) {
+  :root {
+    --fs-h1: 5rem;
+    --fs-h2: 3.75rem;
+    --fs-h3: 1.5rem;
+    --fs-body: 1.125rem;
+  }
+}
+
+body {
+  color: var(--clr-txt);
+  margin: 0;
+  font-family: var(--ff-primary);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+}
+
+section {
+  padding: 5em 2em;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+h1 {
+  font-family: var(--ff-secondary);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+}
+
+h3 {
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-reg);
+  margin-bottom: 1em;
+}
+
+::selection {
+  background: #EB8A44;
 }
