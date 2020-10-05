@@ -17,9 +17,9 @@ const Header = () => {
       <header>
         <nav>
           <ul className={styles.navLinks}>
-            <li>Stack</li>
             <li>Projects</li>
             <li>Blog</li>
+            <li>About</li>
           </ul>
         </nav>
         <div className={styles.logo}>

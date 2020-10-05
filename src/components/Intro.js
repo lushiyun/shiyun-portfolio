@@ -1,6 +1,6 @@
 import React from "react"
 import styles from "./intro.module.css"
-import { FaGithubAlt } from "react-icons/fa"
+import { SiGithub } from "react-icons/si"
 import { FaTwitter } from "react-icons/fa"
 import { FaLinkedin } from "react-icons/fa"
 import { FaMedium } from "react-icons/fa"
@@ -21,7 +21,7 @@ const Intro = () => (
             target="_blank"
             rel="noopener noreferrer"
           >
-            <FaGithubAlt />
+            <SiGithub />
           </a>
         </li>
         <li>
@@ -40,7 +40,7 @@ const Intro = () => (
             rel="noopener noreferrer"
           >
             <FaLinkedin />
-        </a>
+          </a>
         </li>
         <li>
           <a

@@ -4,7 +4,10 @@ import gatsbyLogo from "../images/Gatsby-Logo.svg"
 const Footer = () => {
   return (
     <footer>
-      <div className="footer-text">
+        <small>
+          Copyright © Shiyun Lu {new Date().getFullYear()} - designed and
+          developed by me
+        </small>
         <small>
           Powered by{" "}
           <a
@@ -15,8 +18,6 @@ const Footer = () => {
             <img src={gatsbyLogo} alt="Gatsby logo" className="gatsby-logo" />
           </a>
         </small>
-        <small>Copyright © Shiyun Lu {new Date().getFullYear()}</small>
-      </div>
     </footer>
   )
 }
