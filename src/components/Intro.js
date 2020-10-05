@@ -4,6 +4,7 @@ import { SiGithub } from "react-icons/si"
 import { FaTwitter } from "react-icons/fa"
 import { FaLinkedin } from "react-icons/fa"
 import { FaMedium } from "react-icons/fa"
+import ContactBtns from "./ContactBtns"
 
 const Intro = () => (
   <div className={styles.wrapper}>
@@ -13,7 +14,10 @@ const Intro = () => (
         <h1>I'm Shiyun Lu.</h1>
         <h1>A design-minded developer.</h1>
       </div>
-      <h3>I create things on the web to make the world a smaller place!</h3>
+      <h3>
+        I create things on the web to make the world a smaller place, could be
+        with your company!
+      </h3>
       <ul className={styles.social}>
         <li>
           <a
@@ -52,8 +56,7 @@ const Intro = () => (
           </a>
         </li>
       </ul>
-      <button className="btnGhost">My Resume</button>
-      <button className="btnFull">Email Me</button>
+      <ContactBtns />
     </section>
   </div>
 )

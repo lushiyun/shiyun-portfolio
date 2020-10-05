@@ -21,6 +21,8 @@ header {
 
 .navLinks li {
   margin-right: 1.5em;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .logo {

@@ -1,6 +1,8 @@
 import React from "react"
 import { graphql, useStaticQuery } from "gatsby"
+import { Link } from "gatsby"
 import Img from "gatsby-image"
+import scrollTo from "gatsby-plugin-smoothscroll"
 
 import logo from "../images/logo.svg"
 import styles from "./header.module.css"
@@ -17,9 +19,10 @@ const Header = () => {
       <header>
         <nav>
           <ul className={styles.navLinks}>
-            <li>Projects</li>
-            <li>Blog</li>
-            <li>About</li>
+            <li onClick={() => scrollTo("#projects")}>Projects</li>
+            <li onClick={() => scrollTo("#blog")}>Blog</li>
+            <li onClick={() => scrollTo("#about")}>About</li>
+            <li onClick={() => scrollTo("#contact")}>Contact</li>
           </ul>
         </nav>
         <div className={styles.logo}>

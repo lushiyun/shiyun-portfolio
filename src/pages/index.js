@@ -5,6 +5,7 @@ import Stack from "../components/Stack"
 import Projects from "../components/Projects"
 import Posts from "../components/Posts"
 import About from "../components/About"
+import Contact from "../components/Contact"
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <Projects />
       <Posts />
       <About />
+      <Contact />
     </Layout>
   )
 }

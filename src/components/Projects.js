@@ -12,7 +12,7 @@ const Projects = () => {
 
   return (
     <section>
-      <TitleRight title={"Selected Projects"} />
+      <TitleRight title={"Selected Projects"} anchor={"projects"} />
       <div className={styles.projects}>
         {projects.map(project => (
           <Project key={project.id} project={project} />

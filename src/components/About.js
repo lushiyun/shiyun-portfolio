@@ -14,7 +14,7 @@ const About = () => {
 
   return (
     <section>
-      <TitleRight title={"About Me"} />
+      <TitleRight title={"About Me"} anchor={"about"} />
       <div className={styles.content}>
         <div>
           <Img fluid={fluid} alt="Shiyun's headshot" />
@@ -30,8 +30,11 @@ const About = () => {
             studying software engineering at the Flatiron school. I currently
             love React, Redux, and Rails. My favorite developer is Mark
             "acemarke" Erikson. And I want to connect people across the world
-            through technology.{" "}
-            <span className={styles.emphasize}>Email me if you want to be my first employer in tech!</span>
+            through technology.
+            <span className={styles.emphasize}>
+              Contact me if you want to be my first employer in tech!
+            </span>
+            <span style={{ fontSize: "1.5rem" }}>👇</span>
           </p>
           <p>
             I love street food, I waste time on K-pop, and I'm always advocating
