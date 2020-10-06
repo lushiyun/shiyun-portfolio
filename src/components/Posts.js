@@ -22,12 +22,12 @@ const Posts = () => {
               <h3>
                 Action Cable, React Hooks, Redux Toolkit: Yet Another Chat App
               </h3>
-            </a>
-            <p>
-              <span className={styles.emoji}>👏</span> 206
-            </p>
-          </div>
-        </article>
+              <p>
+                <span className={styles.emoji}>👏</span> 206
+              </p>
+            </div>
+          </article>
+        </a>
         <a
           href="https://medium.com/@lushiyun"
           target="_blank"
