@@ -2,7 +2,7 @@ import React from "react"
 
 const ContactBtns = () => (
   <>
-    <a href="mailto:lushiyun@outlook.com">
+    <a href="mailto:hello@shiyunlu.com">
       <button className="btnGhost">Email Me</button>
     </a>
     <a
