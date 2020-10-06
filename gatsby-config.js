@@ -6,7 +6,7 @@ module.exports = {
     description: `Shiyun Lu's portfolio site on frontend development and software engineering`,
     author: `lushiyun`,
     twitterUsername: `@lu_shiyun`,
-    siteUrl: `https://shiyunlu.com`
+    siteUrl: `https://shiyunlu.com`,
   },
   plugins: [
     `gatsby-transformer-sharp`,
@@ -23,7 +23,7 @@ module.exports = {
     {
       resolve: `gatsby-source-strapi`,
       options: {
-        apiURL: `http://localhost:1337`,
+        apiURL: `https://shiyun-portfolio-cms.herokuapp.com`,
         queryLimit: 1000, // Default to 100
         contentTypes: [`projects`],
       },
