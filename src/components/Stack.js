@@ -99,13 +99,13 @@ const Stack = () => {
           </ul>
         </article>
         <article className={styles.database}>
-          <strong>Dababase</strong>
+          <strong>Database</strong>
           <ul>
             <li>
               <SiGraphql /> GraphQL
             </li>
             <li>
-              <SiPostgresql /> PostgresQL
+              <SiPostgresql /> PostgreSQL
             </li>
           </ul>
         </article>

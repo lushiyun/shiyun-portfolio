@@ -15,8 +15,7 @@ const Intro = () => (
         <h1>A design-minded developer.</h1>
       </div>
       <h3>
-        I create things on the web to make the world a smaller place, could be
-        with your company!
+        I create things on the web to make the world a smaller place!
       </h3>
       <ul className={styles.social}>
         <li>

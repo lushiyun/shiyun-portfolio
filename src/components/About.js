@@ -21,20 +21,15 @@ const About = () => {
         </div>
         <article className={styles.description}>
           <p>
-            Currently based in DC, I grew up in China, lived a year in Egypt and
-            a couple months in Ethiopia. I studied international relations and
-            have worked on the Middle East and Africa for five years.
+            Currently based in DC, I grew up in China, spent a year in Egypt and
+            worked for a few months in Ethiopia. I have an MA in international relations and
+            have worked on Middle East and Africa related projects for five years.
           </p>
           <p>
-            I can't stop learning, so I recently spent five fullfilling months
-            studying software engineering at the Flatiron school. I currently
-            love React, Redux, and Rails. My favorite developer is Mark
+            I'm always learning, so I recently spent five fulfilling months
+            studying software engineering at the Flatiron School. I love React, Redux, and Rails. My favorite developer is Mark
             "acemarke" Erikson. And I want to connect people across the world
             through technology.
-            <span className={styles.emphasize}>
-              Contact me if you want to be my first employer in tech!
-            </span>
-            <span style={{ fontSize: "1.5rem" }}>👇</span>
           </p>
           <p>
             I love street food, I waste time on K-pop, and I'm always advocating
