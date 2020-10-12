@@ -20,6 +20,11 @@ import { FaFigma } from "react-icons/fa"
 import { SiGraphql } from "react-icons/si"
 import { SiPostgresql } from "react-icons/si"
 import { FaSass } from "react-icons/fa"
+import { SiTypescript } from "react-icons/si"
+import { FaNodeJs } from "react-icons/fa"
+import { FaVuejs } from "react-icons/fa"
+import { SiTailwindcss } from "react-icons/si"
+import { FaAws } from "react-icons/fa"
 
 import styles from "./stack.module.css"
 import TitleLeft from "./TitleLeft"
@@ -27,13 +32,16 @@ import TitleLeft from "./TitleLeft"
 const Stack = () => {
   return (
     <section>
-      <TitleLeft title={'My Stack'} />
+      <TitleLeft title={"My Stack"} />
       <div className={styles.grid}>
         <article className={styles.tech}>
           <strong>Technologies</strong>
           <ul>
             <li>
               <SiJavascript /> JavaScript
+            </li>
+            <li>
+              <SiTypescript /> TypeScript
             </li>
             <li>
               <SiHtml5 /> html
@@ -43,6 +51,9 @@ const Stack = () => {
             </li>
             <li>
               <SiRuby /> Ruby
+            </li>
+            <li>
+              <FaNodeJs /> Node.js
             </li>
           </ul>
         </article>
@@ -56,6 +67,9 @@ const Stack = () => {
               <SiRedux /> Redux
             </li>
             <li>
+              <FaVuejs /> Vue
+            </li>
+            <li>
               <SiGatsby /> Gatsby
             </li>
             <li>
@@ -67,6 +81,9 @@ const Stack = () => {
             <li>
               <FaBootstrap /> Bootstrap
             </li>
+            <li>
+              <SiTailwindcss /> Tailwind CSS
+            </li>
           </ul>
         </article>
         <article className={styles.tool}>
@@ -76,13 +93,16 @@ const Stack = () => {
               <SiGit /> Git
             </li>
             <li>
-              <FaSass /> Sass
+              <FaAws /> AWS
             </li>
             <li>
               <SiHeroku /> Heroku
             </li>
             <li>
               <SiNetlify /> Netlify
+            </li>
+            <li>
+              <FaSass /> Sass
             </li>
             <li>
               <SiStrapi /> Strapi
