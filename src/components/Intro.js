@@ -14,9 +14,7 @@ const Intro = () => (
         <h1>I'm Shiyun Lu.</h1>
         <h1>A design-minded developer.</h1>
       </div>
-      <h3>
-        I create things on the web to make the world a smaller place!
-      </h3>
+      <h3>I create things on the web to make the world a smaller place!</h3>
       <ul className={styles.social}>
         <li>
           <a
