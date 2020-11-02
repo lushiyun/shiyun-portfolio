@@ -9,7 +9,6 @@ import { SiRedux } from "react-icons/si"
 import { SiGatsby } from "react-icons/si"
 import { SiRails } from "react-icons/si"
 import { SiMaterialUi } from "react-icons/si"
-import { FaBootstrap } from "react-icons/fa"
 import { SiGit } from "react-icons/si"
 import { SiHeroku } from "react-icons/si"
 import { SiNetlify } from "react-icons/si"
@@ -25,6 +24,9 @@ import { FaNodeJs } from "react-icons/fa"
 import { FaVuejs } from "react-icons/fa"
 import { SiTailwindcss } from "react-icons/si"
 import { FaAws } from "react-icons/fa"
+import { SiNextDotJs } from "react-icons/si"
+import { SiAdobexd } from "react-icons/si"
+import { SiMongodb } from "react-icons/si"
 
 import styles from "./stack.module.css"
 import TitleLeft from "./TitleLeft"
@@ -67,7 +69,10 @@ const Stack = () => {
               <SiRedux /> Redux
             </li>
             <li>
-              <FaVuejs /> Vue
+              <FaVuejs /> Vue.js
+            </li>
+            <li>
+              <SiNextDotJs /> Next.js
             </li>
             <li>
               <SiGatsby /> Gatsby
@@ -77,9 +82,6 @@ const Stack = () => {
             </li>
             <li>
               <SiMaterialUi /> Material UI
-            </li>
-            <li>
-              <FaBootstrap /> Bootstrap
             </li>
             <li>
               <SiTailwindcss /> Tailwind CSS
@@ -111,10 +113,13 @@ const Stack = () => {
               <SiApollographql /> Apollo
             </li>
             <li>
-              <SiAdobeillustrator /> Illustrator
+              <FaFigma /> Figma
             </li>
             <li>
-              <FaFigma /> Figma
+              <SiAdobexd /> AdobeXD
+            </li>
+            <li>
+              <SiAdobeillustrator /> Illustrator
             </li>
           </ul>
         </article>
@@ -126,6 +131,9 @@ const Stack = () => {
             </li>
             <li>
               <SiPostgresql /> PostgreSQL
+            </li>
+            <li>
+              <SiMongodb /> MongoDB
             </li>
           </ul>
         </article>
