@@ -24,7 +24,7 @@ const Projects = () => {
 
 const query = graphql`
   {
-    allStrapiProjects {
+    allStrapiProjects(sort: {fields: updated_at, order: DESC}) {
       nodes {
         title
         tagline
