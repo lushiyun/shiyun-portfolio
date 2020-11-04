@@ -27,6 +27,7 @@ import { FaAws } from "react-icons/fa"
 import { SiNextDotJs } from "react-icons/si"
 import { SiAdobexd } from "react-icons/si"
 import { SiMongodb } from "react-icons/si"
+import { SiDocker } from "react-icons/si"
 
 import styles from "./stack.module.css"
 import TitleLeft from "./TitleLeft"
@@ -96,6 +97,9 @@ const Stack = () => {
             </li>
             <li>
               <FaAws /> AWS
+            </li>
+            <li>
+              <SiDocker /> Docker
             </li>
             <li>
               <SiHeroku /> Heroku
