@@ -23,7 +23,7 @@ const About = () => {
           <p>
             Currently based in DC, I grew up in China, spent a year in Egypt and
             worked for a few months in Ethiopia. I have an MA in international relations and
-            have worked on Middle East and Africa related projects for five years.
+            have worked on Middle East and Africa related projects for six years.
           </p>
           <p>
             I'm always learning, so I recently spent five fulfilling months
