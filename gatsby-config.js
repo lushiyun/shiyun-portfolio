@@ -2,8 +2,8 @@ const path = require(`path`)
 
 module.exports = {
   siteMetadata: {
-    title: `Shiyun Lu Developer`,
-    description: `Shiyun Lu's portfolio site on frontend development and software engineering`,
+    title: `Shiyun Lu`,
+    description: `Shiyun Lu's portfolio site`,
     author: `lushiyun`,
     twitterUsername: `@lu_shiyun`,
     siteUrl: `https://shiyunlu.com`,
@@ -11,13 +11,30 @@ module.exports = {
   plugins: [
     `gatsby-transformer-sharp`,
     `gatsby-plugin-sharp`,
-    `gatsby-plugin-sass`,
-    `gatsby-plugin-smoothscroll`,
+    `gatsby-plugin-sass`, // for react-modal-video
+    `gatsby-plugin-anchor-links`,
+    {
+      resolve: `gatsby-plugin-mdx`,
+      options: {
+        gatsbyRemarkPlugins: [
+          {
+            resolve: `gatsby-remark-images`,
+          },
+        ],
+      },
+    },
     {
       resolve: `gatsby-source-filesystem`,
       options: {
         name: `images`,
         path: `${__dirname}/src/images/`,
+      },
+    },
+    {
+      resolve: `gatsby-source-filesystem`,
+      options: {
+        name: `posts`,
+        path: `${__dirname}/posts/`,
       },
     },
     {

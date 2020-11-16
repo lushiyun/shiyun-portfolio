@@ -1,0 +1,276 @@
+---
+title: JavaScript Drag and Drop to Sort Locations and Render Routes
+slug: javascript-drag-and-drop-to-sort-locations-and-render-routes
+date: 2020-08-23
+image: ./images/direction-plant.jpg
+---
+
+This is a write-up on the subject feature of the Trip Planner app that I recently built for the Flatiron School’s software engineering program. With this feature, users can drag and drop saved places in their daily planners to determine the order of visiting each place. Based on this order, the app displays daily routing and directions on click.
+
+A full implementation of the feature involves working with:
+
+- [HTML Drag and Drop API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API); and
+- [Google Maps Platform](https://cloud.google.com/maps-platform), especially the [places library](https://developers.google.com/maps/documentation/javascript/places) and the [directions service](https://developers.google.com/maps/documentation/javascript/directions)
+
+### Drag and Drop Elements with Sorting
+
+#### Draggable Elements
+
+First, identify draggable items, which will have a draggable attribute set as true. They will also listen for the dragstart and dragend events. In my example, the draggable items are dynamically added to a list when user clicks on the save button, like so:
+
+```javascript
+const addPlaceToPlanner = () => {
+  // get place_id
+  const placeId = document.querySelector(".place-details").id
+
+  const placeItem = document.createElement("div")
+
+  // set place_id on item for later google map directions queries
+  placeItem.setAttribute("data-place-id", placeId)
+
+  placeItem.setAttribute("draggable", true)
+  placeItem.innerHTML = `...` // omitted HTML
+
+  document.querySelector(".place-bucket").appendChild(placeItem)
+}
+```
+
+The following points are worth noting:
+
+- Make sure to preserve the `pace_id` (a unique id assigned by Google), which is important for route rendering; more details on this later
+- Duplication of draggable elements can be achieved through the `cloneNode()` method as follows:
+
+```javascript
+const duplicateListItem = e => {
+  const itemNode = e.target.parentNode.parentNode
+  const clone = itemNode.cloneNode(true)
+  itemNode.after(clone)
+}
+```
+
+- In case duplication is needed, place_id should be saved with the data instead of id attribute; this is because `cloneNode()` also clones the element’s id, which needs to be unique on the DOM
+
+#### Assign dragstart and dragend Event Listeners
+
+In my case, the dragstart and dragend event listeners are delegated from the entire panel to individual list items. It is necessary for the duplication feature. The `cloneNode()` method does not clone event listeners from the original elements. If duplication is not needed, you can add the event listeners on the item as you append it to the parent element.
+
+```javascript
+document.querySelector(".planner-content").addEventListener("dragstart", e => {
+  if (e.target.closest(".list-item")) {
+    e.target.closest(".list-item").classList.add("dragging")
+  }
+})
+
+document.querySelector(".planner-content").addEventListener("dragend", e => {
+  if (e.target.closest(".list-item")) {
+    e.target.closest(".list-item").classList.remove("dragging")
+  }
+})
+```
+
+The above code allows for the targeting of the single element that is being dragged on the DOM through the class name of “dragging”, which facilitates style changes and item sorting in the receiving container when drag ends.
+
+#### Assign dragover Event Listeners to Containers
+
+Identify containers that will receive draggable elements to assign dragover event listeners, like so:
+
+```javascript
+dayBox.addEventListener("dragover", e => {
+  // if you don't use arrow function, you can refer to e.currentTarget by 'this'
+  const container = e.currentTarget 
+
+  // there is only one single element with this className
+  const item = document.querySelector(".dragging") 
+
+  // e.clientY returns the vertical coordinate within client area where the event occured
+  // the dragover event continuously occurs
+  const afterElement = getDragAfterElement(container, e.clientY)
+
+  if (afterElement) {
+    container.insertBefore(item, afterElement)
+  } else {
+    container.appendChild(item)
+  }
+
+  // the default handling of the dragover event is not to allow a drop
+  e.preventDefault()
+})
+
+const getDragAfterElement = (container, y) => {
+  const draggableElms = [
+    ...container.querySelectorAll(".list-item:not(.dragging)"),
+  ]
+
+  // think of arguments in the reduce as:
+  // closest element which we insert the dragging element before
+  // current child of container
+  return draggableElms.reduce(
+    (closest, child) => {
+
+      // the size of the element and its position relative to the viewport
+      const rect = child.getBoundingClientRect() 
+
+      // (rect.top + rect.height/2) returns the y of the container's child element's middle point
+      const offset = y - (rect.top + rect.height / 2)
+
+      // if the dragging element is immediately above the child's middle point
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child }
+      } else {
+        return closest
+      }
+    },
+    // the initial value in the reduce function is negative infinity
+    { offset: Number.NEGATIVE_INFINITY }
+  ).element 
+}
+```
+
+I provide comments in the above code to explain, especially, the `getDragAfterElement()` function, which involves comparing the Y coordinates of the dragging element to those of the existing elements in the receiving container. The `reduce()` function within `getDragAfterElement()` returns the element whose middle point the dragging element is immediately above. If the code is unclear, please test with console.logging the y and offset values.
+
+This concludes the actions for drag and drop with sorting. The below section explains how to work with the Google Maps Platform to render routes for a given day’s locations.
+
+### Route and Directions Rendering
+
+#### Set up Google Maps API
+
+Sign up for the [Google Maps Platform](https://cloud.google.com/maps-platform), which provides a trial period. Please refer to [Google’s documentation](https://developers.google.com/maps/gmp-get-started) on how to get an API key, enable services, and restrict API call access. Make sure to enable the following APIs:
+
+- Maps JavaScript API
+- Places API
+- Directions API
+
+After everything is squared away with Google, include the following script tag in your index.html’s head.
+
+```html
+<script defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+```
+
+If you include `callback=initMap` in the script tag, make sure you have an `initMap()` function available globally and your `index.js` tag is before the Google maps API script tag.
+
+In my example, I call `initMap()` after the user enters a location so I can pass in the latitude and longitude, like so:
+
+```javascript
+// set these variables globally or in the module
+let map; 
+let service;
+let directionsService;
+let directionsRenderer;
+
+const markers = {};  // only if there is a need to display markers
+
+const initMap = center => {
+  // a div with #map is required in the HTML
+  map = new google.maps.Map(document.querySelector('#map'), {
+
+    // pass a center like so: { lat: ... , lgn: ... }
+    center: center, 
+    zoom: 13,
+    // this parameter is not required
+    styles: GMStyles.mapStyles
+  });
+}
+```
+
+Note:
+
+- Declare the `map`, `service`, `directionsService` and `directionsRenderer` so that consecutive routing can be made with the previous one cleared; this may not be the best practice and I will make updates after I further study managing state through React
+- Only the center and zoom parameters are required to initialize the map; if styles are needed, I recommend generating a JSON style with the [style wizard](https://mapstyle.withgoogle.com/)
+
+#### Get place_ids for Route Mapping and Set Up directionsPanel for Displaying Directions
+
+With the place items’ order already sorted through drag and drop on the DOM and the `place_id` saved with the elements’ data attribute, we can get an array of `place_id`s like so:
+
+```javascript
+const getPlaceIds = e => {
+  // title element is before the list of place items
+  const titleElm = e.target.closest('.title'); 
+  const itemElms = (titleElm.nextElementSibling.children ? [...titleElm.nextElementSibling.children] : null);
+  // no action if there are less than 2 places
+  if (!itemElms || itemElms.length < 2) return null;
+  return itemElms.map(item => item.dataset.placeId);
+}
+```
+
+Before we can display the directions, we need to ensure that there is a `div` with the id `directionsPanel` on the DOM. In my case, I needed to dynamically replace the place overview panel or the place details panel with the directions panel, so I created a function like so:
+
+```JavaScript
+function createDirectionsPanel() {
+  const directionsPanel = document.createElement('div');
+  // google requires a div with #directionsPanel
+  directionsPanel.id = 'directionsPanel'; 
+  directionsPanel.innerHTML = `...`  // omitted HTML
+
+  return directionsPanel;
+}
+```
+
+#### Render Routes and Directions
+
+With all the setup and preparations done, we can finally render the routes and directions! Below is the function for this step:
+
+```javascript
+const renderRoute = placeIds => {
+  removeDirectionsRenderer();  // remove previous directions
+  
+  directionsService = new google.maps.DirectionsService(); // resets the global variable
+  directionsRenderer = new google.maps.DirectionsRenderer();
+
+  // construct an array of waypoint objects
+  const stopovers = placeIds.slice(1, placeIds.length - 1).map(id => {
+    return {stopover: true, location: {placeId: id}}  // passing the place_id is an easy way to query directions
+  });
+  
+  const request = {
+    origin: {placeId: placeIds[0]},
+    destination: {placeId: placeIds[placeIds.length - 1]},
+    waypoints: stopovers,
+    travelMode: google.maps.TravelMode.WALKING,  // pass the desired travel mode
+    unitSystem: google.maps.UnitSystem.IMPERIAL  // pass the desired unit system
+  };
+
+  directionsService.route(request, function(result, status) {
+    if (status == 'OK') {
+      directionsRenderer.setMap(map); // map accessible globally
+     
+      clearMarkers(); // only necessary if there are existing markers on the map
+      
+      // clear all elements that may be displaying where the directions panel should be rendered 
+      document.querySelector('.place-overview').style.display = 'none';
+      removeItem(document.querySelector('.place-details'));
+      removeItem(document.querySelector('#directionsPanel'));
+      
+      // set up directions panel for rendering directions
+      const directionsPanel = createDirectionsPanel();
+      directionsRenderer.setPanel(directionsPanel);
+      directionsRenderer.setDirections(result);
+    } else {
+      alert(status);
+    }
+  });
+}
+
+// this is necessary so there are not multiple routes displaying on the map
+const removeDirectionsRenderer = () => {
+  if (directionsRenderer != null) {
+    directionsRenderer.setMap(null);
+    directionsRenderer = null;
+  }
+}
+
+const removeItem = item => {
+  if(item) item.remove();
+}
+```
+
+Some of the code in the above example use Google Map API’s classes and methods. I include links to the API reference with brief and easy-to-understand explanations below:
+
+- [google.maps.DirectionsService](https://developers.google.com/maps/documentation/javascript/reference/directions#DirectionsService) class
+- [route(request, callback)](https://developers.google.com/maps/documentation/javascript/reference/directions#DirectionsService.route)
+- [setMap(map)](https://developers.google.com/maps/documentation/javascript/reference/directions#DirectionsRenderer.setMap)
+- [setPanel(panel)](https://developers.google.com/maps/documentation/javascript/reference/directions#DirectionsRenderer.setPanel)
+- [setDirections(directions)](https://developers.google.com/maps/documentation/javascript/reference/directions#DirectionsRenderer.setDirections)
+
+### Conclusion
+
+This is the entire process for implementing drag and drop to sort locations and render routes. The Google Maps Platform includes several big APIs worth exploring. With their well-written guides and references, we can easily practice our problem-solving skills, and as a bonus, create cool things!

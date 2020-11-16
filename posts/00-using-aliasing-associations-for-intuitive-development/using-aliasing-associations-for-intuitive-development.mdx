@@ -1,0 +1,153 @@
+---
+title: Using Rails Aliasing Associations for Intuitive Development
+slug: using-rails-aliasing-associations-for-intuitive-development
+date: 2020-07-26
+image: ./images/data-heart.jpg
+---
+
+This is a reflection write-up on a Rails project I recently completed for the Flatiron School’s Software Engineering program. This project features a support ticket system that provides frequently asked questions, commenting, tagging, and searching functions. It also allows admins to schedule meetings with users as well as start and manage tasks associated with the support tickets.
+
+When creating an association, Active Record makes these two assumptions:
+
+First, the class name of the model your association points to is based directly off the name of the association. For example, if I write my association as below, ActiveRecord will look for classes named `Requester` and `Requestee` as the receiver of the Meeting’s `belongs_to` association.
+
+```rb
+class Meeting < ApplicationRecord
+  belongs_to :requester
+  belongs_to :requestee
+end
+```
+
+Second, the foreign key in any `belongs_to` relationship will be called `associationname_id`. This means, such as in the above example, ActiveRecord assumes the `meetings` table has a `requester_id` column pointing to a requesters table and a `requestee_id` column pointing to a `requestees` table.
+
+However, we often need to set up our associations such that one model can reference another model with two different names. In my above example, both `requester` and `requestee` are users stored on the `users` table referenced in the User model. Therefore, a user can request meetings (be the requester) and receive meeting requests (be the requestee). A meeting, on the other hand, belongs to a requester and a requestee, both of which are users.
+
+### Aliasing in the belongs_to model
+
+The association on the Meeting model’s side is a basic one-to-one connection with an aliasing element:
+
+```ruby
+#app/models/meeting.rb
+
+class Meeting < ApplicationRecord
+  belongs_to :requester, class_name: 'User'
+  belongs_to :requestee, class_name: 'User'
+
+  ... ...
+end
+```
+
+### Define references in the migration
+
+To alias a user as either a requester or requestee on the meetings table, the references in the migration table might look like below:
+
+```ruby
+class CreateMeetings < ActiveRecord::Migration
+
+  def change
+    create_table :meetings do |t|
+      t.references :requester, references: :users, foreign_key: { to_table: :users }
+      t.references :requestee, references: :users, foreign_key: { to_table: :users}
+    end
+  end
+
+end
+```
+
+The `foreign_key: { to_table: :association }` syntax ensures that the `:requester` and `:requestee` columns on the meetings table are not looking for tables with the name “requester” and “requestee.” Rather, the association should actually point to the `users` table.
+
+### Aliasing in the has_many model
+
+On the User model, we can’t use `has_many :meetings` as we do not have any column named `user_id` in table `meetings`. We can reference meetings as either “requested_meetings” or “requesting_meetings” like so:
+
+```ruby
+#app/models/user.rb
+
+class User < ActiveRecord::Base
+  has_many :requesting_meetings, class_name: "Meeting", foreign_key: "requester_id"
+  has_many :requested_meetings, class_name: "Meeting", foreign_key: "requestee_id"
+  ... ...
+end
+```
+
+This way, we can call `User.first.requested_meetings` as well as `User.first.requesting_meetings`. We can also define a `meetings` method that returns the combination of `requested_meetings` and `requesting_meetings`.
+
+However, while the project requires a distinction between requesters and requestees, it doesn’t require a distinction between requested meetings and requesting meetings. From the performance point of view, two queries need to be made to get the `meetings`. Therefore, I wrote a custom class method in the User model like so:
+
+```ruby
+#app/models/user.rb
+
+class User < ApplicationRecord
+  ... ...
+  def meetings
+    Meeting.where("requester_id = ? OR requestee_id = ?", id, id)
+  end
+  ... ...
+end
+```
+
+### Establish relationship in controller
+
+After the associations are set up in the database and models, we can establish the relationship between meetings, requestees, and requesters with ease. In my project, an admin requests meetings with regular users, who submit support tickets and are referenced as “submitter”. And a support ticket can have many meetings. In the meeting controller’s create action, we can easily establish the relationship like so:
+
+```ruby
+#app/controllers/meetings_controller.rb
+
+class MeetingsController < ApplicationController
+... ...
+  def create
+    @meeting = @ticket.meetings.build(meeting_params)
+    @meeting.requester = current_user
+    @meeting.requestee = @ticket.submitter
+    if @meeting.save
+      MeetingMailer.meeting_schedule_notification(@meeting).deliver_later
+      redirect_to @meeting, notice: 'Meeting requested'
+    else
+      render :new
+    end
+  end
+... ...
+end
+```
+
+### Use aliased associations in views and mailers
+
+After a meeting’s requester and requestee are set, we can retrieve `@meeting.requester` and `@meeting.requestee` with convenience in our views and mailers. For example, I set up the logic in my `meetings_helper` to determine which views to render according to the `current_user`’s relation to the meeting.
+
+```ruby
+#app/helpers/meetings_helper.rb
+
+module MeetingsHelper
+  def set_meeting_with(meeting)
+    current_user == meeting.requester ? meeting.requestee.name : meeting.requester.name
+  end
+
+  def show_requestee_meeting_actions(meeting)
+    return unless current_user == meeting.requestee && meeting.requested?
+    render 'meetings/shared/requestee_actions', meeting: meeting
+  end
+
+  def show_requester_meeting_actions(meeting)
+    return unless current_user == meeting.requester
+    render 'meetings/shared/requester_actions', meeting: meeting
+  end
+ ... ...
+end
+```
+
+This also allows me convenience in the mailers where I only passed through the meeting argument:
+
+```ruby
+#app/mailers/meeting_mailer.rb
+
+class MeetingMailer < ApplicationMailer
+  add_template_helper(MeetingsHelper)
+  def meeting_schedule_notification(meeting)
+    @meeting = meeting
+    mail(to: @meeting.requestee.email, subject: "#{@meeting.requester.name} Requested a Meeting With You")
+  end
+... ...
+end
+```
+
+I hope you use aliasing association as one of your tools of “automagic” provided by the ActiveRecord ORM to make database queries intuitive and convenient in your development process.

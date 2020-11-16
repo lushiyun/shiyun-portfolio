@@ -38,6 +38,13 @@ body {
   font-family: var(--ff-primary);
   font-size: var(--fs-body);
   line-height: 1.6;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
 }
 
 section {
@@ -51,7 +58,7 @@ strong {
 }
 
 small {
-  font-size: .8rem;
+  font-size: 0.8rem;
   font-weight: 300;
 }
 
@@ -109,7 +116,7 @@ p {
   transition: 250ms ease-in-out;
 }
 .btnSmall {
-  padding: .75em 1em;
+  padding: 0.75em 1em;
   font-size: 1rem;
   margin-bottom: 1em;
 }
@@ -155,6 +162,7 @@ p {
 }
 
 footer {
+  flex-shrink: 0;
   background-color: rgba(249, 220, 36, 0.4);
   color: var(--clr-txt);
   text-transform: uppercase;
@@ -164,7 +172,7 @@ footer {
 
 footer small {
   display: block;
-  margin-bottom: .5em;
+  margin-bottom: 0.5em;
 }
 
 .gatsby-logo {

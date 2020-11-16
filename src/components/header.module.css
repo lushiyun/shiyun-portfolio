@@ -1,6 +1,10 @@
 @media (min-width: 768px) {
   .wrapper {
-    background: linear-gradient(90deg, transparent 65%, rgba(249, 220, 36, 0.4) 35%);
+    background: linear-gradient(
+      90deg,
+      transparent 65%,
+      rgba(249, 220, 36, 0.4) 35%
+    );
     width: 100%;
     z-index: -1;
   }
@@ -23,6 +27,10 @@ header {
   margin-right: 1.5em;
   text-decoration: underline;
   cursor: pointer;
+}
+
+.navLinks a {
+  color: black;
 }
 
 .logo {

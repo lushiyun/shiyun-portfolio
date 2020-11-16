@@ -26,10 +26,7 @@ const About = () => {
             have worked on Middle East and Africa related projects for six years.
           </p>
           <p>
-            I'm always learning, so I recently spent five fulfilling months
-            studying software engineering at the Flatiron School. I love React, Redux, and Rails. My favorite developer is Mark
-            "acemarke" Erikson. And I want to connect people across the world
-            through technology.
+            I'm always learning, so I started doing software engineering about a year ago. I love React, Gatsby, Next.js, and GraphQL. I'm also familiar with Ruby on Rails. I'd love to build more projects with JAMstack approaches. And I want to connect people across the world through technology.
           </p>
           <p>
             I love street food, I waste time on K-pop, and I'm always advocating

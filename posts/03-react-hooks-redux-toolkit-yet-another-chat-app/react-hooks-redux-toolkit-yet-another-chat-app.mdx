@@ -1,0 +1,555 @@
+---
+title: React Hooks, Redux Toolkit - Yet Another Chat App
+slug: react-hooks-redux-toolkit-yet-another-chat-app
+date: 2020-09-26
+image: ./images/chat.jpg
+---
+
+Action Cable is the Rails way to integrate WebSockets, allowing for bi-directional communication with minimal overhead between client and server. I recently made a group chat app with React hooks, Redux Toolkit and Action Cable to support real-time features while leveraging a Rails API backend to preserve data. Below is a demo of these features, including:
+
+🚀 Real-time message updates among users in the same chat room
+
+🚀 Unread message prompts from inactive rooms
+
+🚀 Displaying the number of unread messages after the user closes browser and logs back in
+
+While building this app, I found resources to be scarce on this subject. The Rails guide lacks clarity for using Rails as API. Tutorials from popular articles do not take advantage of Redux for more integrated features. This post is my attempt to expand the knowledge base. It incorporates React hooks and [Redux Toolkit](https://redux-toolkit.js.org/), “the official, opinionated, batteries-included toolset for efficient Redux development.”
+
+This post is organized in three sections: configuration, send messages (from client) and receive messages (by client). As we encounter Redux Toolkit code snippets in the post, I provide excerpts from its documentation for background as the Toolkit might still be relatively new, although most of the concepts shouldn’t.
+
+If there’s interest, I will add a bonus section at the end to describe how to preserve the “last read at” data in the backend for displaying number of unread messages after user leaves and logs back in.
+
+### Configuration
+
+#### Rails Action Cable setup
+
+❗️ This section assumes you already have a working Rails API set up.
+
+1. Include the redis gem for WebSocket communication; uncomment it in your gemfile and `bundle`:
+
+```bash
+    # Use Redis adapter to run Action Cable in production 4.0
+    gem 'redis'
+```
+
+💡 *Aside: *The default Publish-Subscribe (pubsub) queue for Action Cable is `redis` in production and `async` in development and test environments. It was easier for me to work with `redis` even in development.
+
+2. Change the adapter setting in your `config/cable.yml` to the following:
+
+```bash
+    # config/cable.yml
+
+    development:
+      adapter: redis
+```
+
+You may need to install redis locally through `brew install redis` and launch through `brew services start redis`.
+
+3. Mount the ‘/cable’ endpoint in your routes to receive connection requests from client.
+
+```bash
+    # config/routes.rb
+
+    Rails.application.routes.draw do
+      mount ActionCable.server => '/cable'
+    end
+```
+
+💡 *Aside: *Client side connection request will look like this: `CableApp.cable = actionCable.createConsumer('ws://localhost:3000/cable')`
+
+#### React Create App with Redux Toolkit and Context for Action Cable connection
+
+1. Create a react app with Redux Toolkit; you can delete any unnecessary starter code, such as the counter example they include in the Toolkit.
+
+```bash
+    npx create-react-app chat-app-client --template redux
+```
+
+2. Install the [actioncable](https://www.npmjs.com/package/actioncable) package; it does not have any extra dependencies.
+
+```bash
+    npm install --save actioncable
+```
+
+3. Establish one Action Cable connection in your root source file and provide this connection to the App component through Context.
+
+```javascript
+// src.index.js
+
+import React, { createContext } from "react"
+import ReactDOM from "react-dom"
+import { Provider } from "react-redux"
+
+import actionCable from "actioncable"
+
+import App from "./App"
+import store from "./app/store"
+
+const CableApp = {}
+// change to whatever port your server uses
+CableApp.cable = actionCable.createConsumer("ws://localhost:3000/cable")
+export const ActionCableContext = createContext()
+
+ReactDOM.render(
+  <Provider store={store}>
+    // omitted any other providers we may have
+    <ActionCableContext.Provider value={CableApp.cable}>
+      <App />
+    </ActionCableContext.Provider>
+  </Provider>,
+  document.getElementById("root")
+)
+```
+
+💡 *Aside: *Notice the url no longer starts with `http` but `ws` , denoting WebSocket requests.
+
+💡 *Aside: *Notice the term of “Consumer”: once you understand Action Cable’s terminology, the logic should be clear. Refer to the [Rails guide](https://guides.rubyonrails.org/action_cable_overview.html) Section 2 for the architectural stack explanation. Below is a much simplified graphical representation that I attempted based on this sample project. Lines are bi-directional.
+
+![Action Cable Graphical Presentation](https://cdn-images-1.medium.com/max/4320/1*Ju1nRjfFHMJ4WBOgFTy57A.png)_Action Cable Graphical Presentation_
+
+💡 *Aside: *we create the `ActionCableContext` here and use it to provide `CableApp.cable` to `App`’s component tree. This will allow us to generate subscriptions, through one single connection, to multiple cable channels in the Action Cable server. This can happen across components without us having to pass props down manually at every level of the component tree.
+
+This concludes the basic configuration.
+
+Before we go into details on sending messages and receiving messages, we should first generate our models and associations. This is simply to establish a base understanding of the data relationships for easier reference later when we focus on the fun stuff.
+
+❗️ Each chatroom is denoted as a Team in my example.
+
+❗️ The membership table is only necessary for preserving data about unread messages; message can serve as a join table if preserving data is not needed.
+
+```bash
+    rails g resource user name picture_url
+    rails g resource team name description
+    rails g resource membership last_read_at:datetime user:references team:references
+    rails g resource message content user:references team:references
+```
+
+### Send Messages from Client
+
+**Create channel in Rails and prepare for receiving data through WebSockets**
+
+1. Generate the messages channel with Rails command line, which creates the `app/channels/messages_channel.rb` file for us.
+
+```bash
+    rails g channel messages
+```
+
+2. Set up the generated channel with subscribed, receive and unsubscribed actions, corresponding to the subscribe, send and unsubscribe functions on the client side.
+
+```ruby
+class MessagesChannel < ApplicationCable::Channel
+  def subscribed
+    stop_all_streams
+    @team = Team.find(params[:id])
+    stream_for @team
+  end
+
+  def receive(data)
+    ...
+  end
+
+  def unsubscribed
+    stop_all_streams
+  end
+end
+```
+
+❗️ The receive action will be modified in the next section so after the server receives data from font end, it saves the message into database and broadcasts it back to frontend.
+
+💡 *Aside: *A channel is similar to a controller in a regular MVC setup. It can handle multiple subscriptions with different identifiers.
+
+💡* Aside:* The difference between `stream_from` and `stream_for` is that the former expects a string while the latter an object. For example: `stream_from` "`chat_#{params[:room]}`" vs. `stream_for current_user`. I find it easier to understand `stream_for` as it makes the channel more comparable to a controller.
+
+💡 *Aside: *WebSockets provide two-way communication. I find many articles to use Action Cable to broadcast data to the client while receiving data through HTTP. In my opinion, it is more efficient to also receive data through WebSockets.
+
+#### React MessagesList component for sending messages
+
+1. Create a MessagesList component to render the list of messages for the selected team and the input editor. Prepare it with the Action Cable connection provided by the `ActionCableContext.Provider` from the root source file. And set a local `channel` state, so we can use the subscription created in the `useEffect` hook outside the callback.
+
+```javascript
+const MessagesList = () => {
+  const cable = useContext(ActionCableContext)
+  const [channel, setChannel] = useState(null)
+
+  ...
+
+  return (
+    <div>
+      {renderedMessages}
+      <Editor sendMessage={sendMessage} />
+    </div>
+  )
+}
+```
+
+💡*Aside: *Remember, the value provided by the context is `actionCable.createConsumer('ws://localhost:3000/cable')`.
+
+2. Establish subscription to the `MessagesChannel` in a `useEffect` callback. The `MessagesChannel` is already created in our Rails backend. As described in the Action Cable Graphical Presentation, we can create multiple channels on an Action Cable connection; each channel can receive multiple subscriptions from client side.
+
+```javascript
+const MessagesList = () => {
+
+  ...
+
+  useEffect(() => {
+    const channel = cable.subscriptions.create({
+      channel: 'MessagesChannel',
+      id: teamId,
+    })
+
+    setChannel(channel)
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [teamId])
+
+  ...
+
+}
+```
+
+💡 *Aside: *As this example generally follows RESTful conventions, each MessagesList is rendered with the url ‘teams/:teamId’. So it is relatively easy to get the teamId through a `useParams` hook:
+
+```javascript
+const { teamId } = useParams()
+```
+
+Here we first create the subscription, passing in the channel’s name and the identifier. This corresponds to the `subscribed` action in our backend. It expects an identifier (team id) to find the correct team to stream for.
+
+Then we set our component `channel` state to be the subscription created in the callback. This way, we can use the subscription’s `send` method (provided by Action Cable by default) outside the callback.
+
+Finally, we clean up by unsubscribing from the channel. This can be done by calling the (surprise!) `unsubscribe` method provided by Action Cable.
+
+3. Create a `sendMessage` function, which gets the message content from the Editor child component and uses the subscription’s `send` method to send data to our backend. The corresponding action in our backend `MessagesChannel` is `receive(data)`.
+
+```javascript
+
+const MessagesList = () => {
+
+  ...
+
+  const sendMessage = (content) => {
+    const data = { teamId, userId, content }
+    channel.send(data)
+  }
+
+  ...
+
+}
+```
+
+💡 _Aside:_ Remember, this function is passed down to the Editor child component and that’s where it gets the content. Also, `channel` in here refers to the component channel state, which got its value in the `useEffect` callback. The `receive(data)` action in our backend expects team id and user id in addition to the message’s content.
+
+💡 *Aside: *As mentioned above, we can get the team id pretty easily from the url through a `useParams` hook, but you might wonder where to get the current user id. Redux to the rescue! When user logs in, dispatch an action to add user id to the Redux store. This way, we can use a `useSelector` hook to get current user’s id:
+
+```javascript
+const currentUserId = useSelector(state => state.users.currentUser)
+```
+
+### Receive Messages in Client
+
+#### Action Cable broadcast data
+
+The backend work for this part is extremely easy as we have already set up our `MessagesChannel` and corresponding actions. We only need to build out our `receive(data)` action so it saves the received message in our database and broadcasts it back to client.
+
+```ruby
+# app/channels/messages_channel.rb
+
+class MessagesChannel < ApplicationCable::Channel
+  ...
+  def receive(data)
+    user = User.find_by(id: data['userId'])
+    message = @team.messages.create(content: data['content'], user: user)
+    MessagesChannel.broadcast_to(@team, MessageSerializer.new(message).serialized_json)
+  end
+  ...
+end
+
+# app/serializers/message_serializer.rb
+
+class MessageSerializer
+  include FastJsonapi::ObjectSerializer
+  attributes :content, :created_at
+  belongs_to :team
+  belongs_to :user
+end
+```
+
+💡 *Aside: *Remember we have already found the `@team` in our `subscribed` action.
+
+💡 *Aside: *Notice we no longer need to use params to denote the data received from frontend — all information is directly available in a hash as how we shaped it. Remember, we send message like this from our frontend:
+
+```javascript
+const data = { teamId, userId, content }
+channel.send(data)
+```
+
+💡 *Aside: *The serializer is provided by Fast JSON API. I use it for alleged speed.
+
+💡 *Aside: *You can also perform the broadcast later with an Active Job job… so the data transmission is queued up for better performance. It can be done like this:
+
+```ruby
+
+# app/channels/messages_channel.rb
+
+class MessagesChannel < ApplicationCable::Channel
+  ...
+  def receive(data)
+    ...
+    MessageRelayJob.perform_later(message)
+  end
+  ...
+end
+
+# app/jobs/message_relay_job.rb
+
+class MessageRelayJob < ApplicationJob
+  queue_as :default
+
+  def perform(message)
+    team = message.team
+    MessagesChannel.broadcast_to(team, MessageSerializer.new(message).serialized_json)
+  end
+end
+```
+
+#### React frontend receiving messages
+
+Before we get into the steps, we need to clarify where in the React front end we want to receive messages. The MessagesList component described in the above section renders the user’s active team. As one can only _send_ messages in an active team, this component alone is perfectly capable for sending data to our backend. However, we want the user to see unread message prompts from inactive teams — the teams displayed in the user’s teams list but not selected in the url. So the task of receiving broadcasted messages needs to be handled by a TeamListItem component.
+
+1. Create a TeamListItem component similar to MessagesList.
+
+```javascript
+... // omitted imports
+
+import { messageReceived } from '../messages/messagesSlice'
+
+const TeamListItem = ({ team }) => {
+  const dispatch = useDispatch()
+  const cable = useContext(ActionCableContext)
+
+  ...
+
+  useEffect(() => {
+    cable.subscriptions.create(
+      { channel: 'MessagesChannel', id: team.id },
+      {
+        received: (data) => {
+          dispatch(messageReceived(data))
+        },
+      }
+    )
+  }, [team, dispatch])
+
+  ...
+
+  return (
+    ... // simplified presentation
+    <Link to={`/teams/${team.id}`}>
+      {team.name}
+    </Link>
+  )
+}
+
+export default TeamListItem
+```
+
+💡 _Aside:_ This component is used in the TeamsList component like so:
+
+```javascript
+const renderedTeamListItems = teams.map(team => (
+  <TeamListItem key={team.id} team={team} />
+))
+```
+
+Like before, we get the Action Cable connection from the `ActionCableContext`, and establish subscriptions to the `MessagesChannel` for each of the teams on the user’s teams list.
+
+We don’t need to set a component `channel` state here because there’s no need to use the subscription outside the callback. It just receives data and dispatches an action to update our Redux store. So what the heck is `messageReceived`? …
+
+2. Now onto our Redux messagesSlice to receive message and update store.
+
+```javascript
+// src/features/messages/messagesSlice.js
+
+... // omitted imports
+
+const messagesAdapter = createEntityAdapter()
+
+const initialState = messagesAdapter.getInitialState({
+  ...
+})
+
+... // omitted thunks
+
+const messagesSlice = createSlice({
+  name: 'messages',
+  initialState,
+  reducers: {
+    messageReceived(state, action) {
+      const data = action.payload.data
+      const message = {
+        id: data.id,
+        ...data.attributes,
+        teamId: data.relationships.team.data.id,
+        userId: data.relationships.user.data.id,
+      }
+      messagesAdapter.addOne(state, message)
+    },
+  },
+  extraReducers: {
+
+   ...
+
+  },
+})
+
+export const { messageReceived } = messagesSlice.actions
+
+export default messagesSlice.reducer
+```
+
+💡 *Aside: *If you are not familiar with Redux Toolkit, here’s an explanation of `createSlice`: “it takes care of generating action type strings, action creator functions, and action objects. All you have to do is define a name for this slice, write an object that has some reducer functions in it, and it generates the corresponding action code automatically. The string from the `name` option is used as the first part of each action type, and the key name of each reducer function is used as the second part.” So, in our example, the "`messages`" name + the "`messageReceived`" reducer function generated an action type of `{type: "messages/messageReceived"}`. “(After all, why write this by hand if the computer can do it for us!)”
+
+💡 _Aside:_ Here’s an explanation of `createEntityAdapter`: “it provides a standardized way to store your data in a slice by taking a collection of items and putting them into the shape of `{ ids: [], entities: {} }`. Along with this predefined state shape, it generates a set of reducer functions and selectors that know how to work with that data.” Refer to [Redux Essentials Performance and Normalizing Data](https://redux.js.org/tutorials/essentials/part-6-performance-normalization) for more information.
+
+💡 *Aside: *The entity adapter, in our case messagesAdapter, provides a set of generated reducer functions for adding, updating, and removing entity instances from the entity state. In our `messageReceived` reducer, we’re using the `addOne` reducer function which accepts a single entity and adds it.
+
+#### React frontend displaying messages
+
+Now with the newly received message properly stored in our Redux store, we need to display it to our user. If the message belongs to an _active_ team, then we should render it in the MessagesList component. Remember, this component is rendered with the ‘teams/:iteamId’ url and displays the message log for the team as well as an input editor. If the message belongs to an *inactive *team, then we need to bold that team’s name and update the number of unread messages in a badge on our teams list.
+
+**Render new messages in the active team**
+
+1. Create selector in the messagesSlice to select messages by team.
+
+```javascript
+// src/features/messages/messagesSlice.js
+
+...
+
+export const { selectAll: selectAllMessages } = messagesAdapter.getSelectors(
+  (state) => state.messages
+)
+
+export const selectMessagesByTeam = createSelector(
+  [selectAllMessages, (state, teamId) => teamId],
+  (messages, teamId) => messages.filter((message) => message.teamId === teamId)
+)
+```
+
+Again, if you’re not familiar with Redux Toolkit, here’s an explanation of `getSelectors`: “The adapter object also has a `getSelectors` function. You can pass in a selector that returns this particular slice of state from the Redux root state, and it will generate selectors like `selectAll` and `selectById`.”
+
+The `createSelector` function is re-exported from the [Reselect library](https://github.com/reduxjs/reselect), “it takes _one or more _‘input selector’ functions as argument, plus an ‘output selector’ function.” When we call `selectMessagesByTeam(state, teamId)`, `“createSelector` will pass all of the arguments into each of our input selectors. Whatever those input selectors return becomes the arguments for the output selector.”
+
+In our case, we have two input selector functions:
+
+```javascript
+    selectAlMessages // from getSelectors
+    (state, teamId) => teamId
+```
+
+Because we pass in `(state, teamId)` to the `selectMessagesByTeam` selector, `createSelector` will pass them into both of the input selector functions. The result of the first input selector function is `messages` and the second is `teamId`. Together they become the arguments of the output selector, which is used to filter the messages.
+
+2. Automagically render the selected messages by team in our MessagesList and update as new messages are added to our store.
+
+```javascript
+... // omitted other imports
+import { selectMessagesByTeam } from './messagesSlice'
+import { useSelector } from 'react-redux'
+import MessageItem from './MessageItem'
+
+const MessagesList = () => {
+
+  ...
+
+  const messages = useSelector((state) => selectMessagesByTeam(state, teamId))
+
+  const renderedMessages =
+    messages &&
+    messages.map((message) => (
+      <MessageItem key={message.id} message={message} />
+    ))
+
+  ...
+
+}
+```
+
+Once a component is hooked up to our store, most of the logic for our data will live in the Redux slices. The result is that we have a clean component which automagically re-renders when the selected state changes.
+
+**Render unread message prompts on the teams list**
+
+1. Create selector to select unread messages by team.
+
+```javascript
+// src/features/messages/messagesSlice.js
+
+... // omitted other imports
+import { selectTeamById } from '../teams/teamsSlice'
+import { isAfter, parseISO, subYears } from 'date-fns'
+
+export const selectUnreadMessages = createSelector(
+  [selectMessagesByTeam, selectTeamById],
+  (messages, team) => {
+    const lastReadAt = parseISO(team.lastReadAt) || subYears(Date.now(), 1)
+    return messages.filter((message) =>
+      isAfter(parseISO(message.created_at), lastReadAt)
+    )
+  }
+)
+```
+
+💡 *Aside: “*Selectors are composable. They can be used as input to other selectors.” `createSelector` generates memoized selectors. “Memoized selectors will only recalculate the results if the input selectors return new values”. It is one of the tools we can use to optimize performance. So I chose to use it to get the unread messages, instead of putting the filtering logic in the component.
+
+As we call `selectUnreadMessages(state, teamId)`, `createSelector` passes both arguments into the `selectMessagesByTeam` and `selectTeamById` input selectors. The returned value of the input selectors are `messages` and `team`, which becomes the arguments for the output selector.
+
+The team entity includes a “last_read_at” attribute, providing information about when the user looked at the team most recently. It can be `null` if the user joined the team but has not looked at it. So we can filter out the unread messages by comparing the message’s “created_at” attribute with the team’s “last_read_at” attribute. In the output selector, we use several helper functions from [date-fns](https://date-fns.org/) to help us with the comparison, including [parseISO](https://date-fns.org/v2.16.1/docs/parseISO), [subYears](https://date-fns.org/v2.16.1/docs/subYears), and [isAfter](https://date-fns.org/v2.16.1/docs/isAfter).
+
+2. Automagically bold team name and render number of unread messages on the teams list based on unread messages data in Redux store
+
+```javascript
+... // omitted other imports
+
+import { selectUnreadMessages } from '../messages/messagesSlice'
+
+const TeamListItem = ({ team }) => {
+
+  ...
+
+  const numOfUnreads = useSelector((state) =>
+    selectUnreadMessages(state, team.id)
+  ).length
+
+  const getFontWeight = () => {
+    if (location.pathname.slice(7) === team.id) {
+      return 'fontWeightRegular'
+    }
+    return numOfUnreads === 0 ? 'fontWeightRegular' : 'fontWeightBold'
+  }
+
+  const renderedNumOfUnreads = () => {
+    if (location.pathname.slice(7) === team.id) {
+      return 0
+    }
+    return numOfUnreads
+  }
+
+  return (
+    // material UI
+    <Link to={`/teams/${team.id}`}>
+      <Badge badgeContent={renderedNumOfUnreads()}>
+        <Typography>
+            <Box fontWeight={getFontWeight()}>{team.name}</Box>
+          </Typography>
+      </Badge>
+    </Link>
+  )
+}
+```
+
+💡 *Aside: *We create helper functions to prevent the unread prompt effects on the active teams. And we know which team is active based on the url, because we follow the RESTful conventions!
+
+### Conclusion
+
+It took me a long time to experiment with the different ways to use Action Cable with React hooks as most tutorials are written using class components. I hope this post is helpful to those who are figuring out how to integrate Action Cable to their React apps using hooks and Redux!
