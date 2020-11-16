@@ -33,14 +33,12 @@ header {
   color: black;
 }
 
-.logo {
-  max-width: 175px;
-  height: auto;
-  padding: 0 1em;
+.navLinks a:hover {
+  color: #eb8a44;
 }
 
-.logo img {
-  width: 100%;
+.logo {
+  display: none;
 }
 
 .thumbnail {
@@ -52,6 +50,17 @@ header {
     display: block;
     width: 135px;
     padding: 0 1em;
+  }
+
+  .logo {
+    display: block;
+    max-width: 175px;
+    height: auto;
+    padding: 0 1em;
+  }
+
+  .logo img {
+    width: 100%;
   }
 }
 

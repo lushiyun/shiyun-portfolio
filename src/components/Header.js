@@ -38,6 +38,15 @@ const Header = () => {
                 Contact
               </AnchorLink>
             </li>
+            <li>
+              <a
+                href="https://standardresume.co/r/shiyunlu"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Resume
+              </a>
+            </li>
           </ul>
         </nav>
         <div className={styles.logo}>

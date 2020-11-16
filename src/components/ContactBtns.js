@@ -6,11 +6,11 @@ const ContactBtns = () => (
       <button className="btnGhost">Email Me</button>
     </a>
     <a
-      href="https://standardresume.co/r/shiyunlu"
+      href="https://calendly.com/shiyunlu/phone-chat"
       target="_blank"
       rel="noopener noreferrer"
     >
-      <button className="btnFull">Resume</button>
+      <button className="btnFull">Schedule a Chat</button>
     </a>
   </>
 )
