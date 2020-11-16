@@ -38,6 +38,12 @@ module.exports = {
       },
     },
     {
+      resolve: `gatsby-plugin-google-gtag`,
+      options: {
+        trackingIds: ["G-G3XDXR0R8R"],
+      },
+    },
+    {
       resolve: `gatsby-source-strapi`,
       options: {
         apiURL: `https://shiyun-portfolio-cms.herokuapp.com`,
